@@ -1,0 +1,47 @@
+#1
+create table unionABC as
+select * from tableA
+union
+select * from tableB
+union 
+select * from tableC;
+
+select month(date) as month,
+		count(distinct customer_id)as total_customers,
+		count(distinct booking_id) as total_bookings
+from UnionABC
+group by 1;
+
+*************************************************************************************************************
+#2
+select city,sum(room_night)as room_night_booked,sum(amount)/sum(room_night) as average_price_per_room
+from
+	(select *,oyo_rooms*(checkout-checkin) as room_night
+	from UnionABC)a
+join tableD b
+on a.hotel_id=b.hotel_id
+group by 1;
+*************************************************************************************************************
+#3
+SELECT  city,hotel_id,revenue
+FROM (
+	SELECT b.city,b.hotel_id, SUM(b.amount) as revenue,RANK() 
+		OVER (PARTITION BY b.city 
+		   ORDER BY SUM(amount) desc) as rank
+	  FROM TableC a
+	  JOIN TableD b
+	  on a.hotel_id=b.hotel_id
+      GROUP BY b.city,b.hotel_id
+     ) c
+WHERE rank <4
+
+*************************************************************************************************************
+#4
+select distinct(select count(distinct customer_id)
+		from tableB 
+		where customer_id in (select customer_id from tableA))/
+		(select count(distinct customer_id)
+		from tableA)*100
+from tableB;
+
+
